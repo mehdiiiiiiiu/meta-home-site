@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meta Home - صفحه املاک</title>
+<!-- Mapbox GL CSS -->
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+  /* CSS Reset */
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: 'Vazir', Tahoma, sans-serif;
+  }
+  body, html {
+    height: 100vh; width: 100vw;
+    background: linear-gradient(135deg, #1f2937, #3b82f6);
+    color: #eee;
+    overflow: hidden;
+  }
+  #app {
+    display: flex; height: 100vh; width: 100vw;
+  }
+  #map {
+    flex: 1.4;
+    position: relative;
+    border-radius: 12px 0 0 12px;
+    box-shadow: 0 0 30px rgba(59,130,246,0.8);
+  }
+  #sidebar {
+    flex: 0.6;
+    background: #111827;
+    box-shadow: -4px 0 20px rgba(59,130,246,0.5);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+    border-radius: 0 12px 12px 0;
+  }
+  #sidebar.active {
+    transform: translateX(0);
+  }
+  h2 {
+    margin-bottom: 12px;
+    color: #3b82f6;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 1.5px;
+  }
+  .property-card {
+    background: #1f2937;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    box-shadow: 0 5px 15px rgba(59,130,246,0.4);
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .property-card:hover {
+    transform: scale(1.04);
+    box-shadow: 0 8px 25px rgba(59,130,246,0.7);
+  }
+  .property-img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .property-card:hover .property-img {
+    transform: scale(1.1);
+  }
+  .property-info {
+    padding: 12px 16px;
+    color: #cbd5e1;
+  }
+  .property-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .property-price {
+    font-size: 1rem;
+    color: #3b82f6;
+    font-weight: 700;
+  }
+  /* Modal Styles */
+  #modal {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(15, 23, 42, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 1000;
+  }
+  #modal.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #modal-content {
+    background: #111827;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 24px;
+    box-shadow: 0 0 40px rgba(59,130,246,0.9);
+    position: relative;
+  }
+  #modal-close {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    color: #3b82f6;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  #modal-close:hover {
+    color: #60a5fa;
+  }
+  /* Gallery */
+  #gallery {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  #gallery img {
+    height: 160px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(59,130,246,0.7);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  #gallery img:hover {
+    transform: scale(1.1);
+  }
+  /* Description */
+  #description {
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  /* 360 Tour placeholder */
+  #tour360 {
+    width: 100%;
+    height: 320px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e0e7ff;
+    font-size: 1.3rem;
+    font-weight: 700;
+    box-shadow: 0 0 25px rgba(59,130,246,0.8);
+  }
+  /* Upload area */
+  #upload-area {
+    border: 2px dashed #3b82f6;border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: #60a5fa;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+  }
+  #upload-area.dragover {
+    background-color: #3b82f6;
+    color: #111827;
+  }
+  input[type="file"] {
+    display: none;
+  }
+  /* Scrollbar */
+  #sidebar::-webkit-scrollbar,
+  #modal-content::-webkit-scrollbar {
+    width: 8px;
+  }
+  #sidebar::-webkit-scrollbar-thumb,
+  #modal-content::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+    border-radius: 4px;
+  }
+  /* Responsive */
+  @media(max-width: 900px) {
+    #app {
+      flex-direction: column;
+    }
+    #map {
+      flex: none;
+      height: 50vh;
+      border-radius: 12px 12px 0 0;
+    }
+    #sidebar {
+      flex: none;
+      height: 50vh;
+      border-radius: 0 0 12px 12px;
+      transform: translateY(100%);
+    }
+    #sidebar.active {
+      transform: translateY(0);
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="map"></div>
+  <div id="sidebar">
+    <h2>ملک‌های منطقه <span id="region-name"></span></h2>
+    <div id="properties-list"></div>
+  </div>
+</div>
+
+<!-- Modal for Property Details -->
+<div id="modal">
+  <div id="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button id="modal-close" aria-label="بستن پنجره جزئیات">&times;</button>
+    <h2 id="modal-title" style="color:#3b82f6; margin-bottom:16px;"></h2>
+    <div id="gallery"></div>
+    <div id="description"></div>
+    <div id="tour360">تور ۳۶۰ درجه اینجا قرار می‌گیرد</div>
+    <label id="upload-area" for="file-upload">آپلود عکس + درگ و دراپ</label>
+    <input type="file" id="file-upload" accept="image/*" multiple />
+  </div>
+</div>
+
+<!-- Mapbox GL JS -->
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+<script>
+  // Mapbox Access Token (لطفاً توکن خودتو از Mapbox جایگزین کن)
+  mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+
+  // نمونه داده مناطق و ملک‌ها (مثلا 3 منطقه و چند ملک در هر کدوم)
+  const regions = {
+    "region1": {
+      name: "منطقه 1",
+      center: [51.4200, 35.6998],
+      properties: [
+        {
+          id: 1,
+          title: "آپارتمان لوکس در منطقه 1",
+          price: "3,500,000,000 تومان",
+          images: [
+            "https://images.unsplash.com/photo-1600585154512-4c8128e7115d?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1598928506310-e2b18a0a3ae7?auto=format&fit=crop&w=800&q=80"
+          ],
+          description: "آپارتمان 3 خوابه با بهترین امکانات و ویو زیبا.",
+          tour360: "" // می‌تونی لینک تور ۳۶۰ قرار بدی
+        },
+        {
+          id: 2,
+          title: "ویلای مدرن در منطقه 1",
+          price: "7,200,000,000 تومان",
+          images: [
+            "https://images.unsplash.com/photo-1501183638714-56f2c5f3a597?auto=format&fit=crop&w=800&q=80"
+          ],
+          description: "ویلا با استخر خصوصی و باغ بزرگ.",
+          tour360: ""
+        }
+      ]
+    },
+    "region2": {
+      name: "منطقه 2",
+      center: [51.4375, 35.7050],
+      properties: [
+        {
+          id: 3,
+          title: "آپارتمان نوساز در منطقه 2",
+          price: "2,100,000,000 تومان",
+          images: [
+            "https://images.unsplash.com/photo-1572120360610-d971b9b431f6?auto=format&fit=crop&w=800&q=80"
+          ],
+          description: "آپارتمان نوساز با امکانات کامل و پارکینگ.",
+          tour360: ""
+        }
+      ]
+    },
+    "region3": {
+      name: "منطقه 3",
+      center: [51.4500, 35.6940],
+      properties: [
+        {
+          id: 4,
+          title: "خانه ویلایی در منطقه 3",
+          price: "5,000,000,000 تومان",
+          images: [
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80"
+          ],
+          description: "خانه ویلایی با حیاط بزرگ و محیط آرام.",
+          tour360: ""
+        }
+      ]
+    }
+  };// Initialize Map
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [51.43, 35.7],
+    zoom: 12,
+    pitch: 45,
+    bearing: -17.6,
+    antialias: true
+  });
+
+  // Add navigation controls
+  map.addControl(new mapboxgl.NavigationControl());
+
+  // Markers storage
+  const markers = [];
+
+  // Add regions as interactive circles on map
+  function addRegionMarkers() {
+    Object.entries(regions).forEach(([key, region]) => {
+      const el = document.createElement('div');
+      el.className = 'marker';
+      el.style.width = '30px';
+      el.style.height = '30px';
+      el.style.borderRadius = '50%';
+      el.style.background = 'rgba(59,130,246,0.8)';
+      el.style.boxShadow = '0 0 10px rgba(59,130,246,0.7)';
+      el.style.cursor = 'pointer';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.color = '#fff';
+      el.style.fontWeight = '700';
+      el.style.fontSize = '0.85rem';
+      el.style.userSelect = 'none';
+      el.textContent = region.properties.length;
+
+      el.addEventListener('mouseenter', () => {
+        el.style.background = '#2563eb';
+        el.style.boxShadow = '0 0 20px #2563eb';
+      });
+      el.addEventListener('mouseleave', () => {
+        el.style.background = 'rgba(59,130,246,0.8)';
+        el.style.boxShadow = '0 0 10px rgba(59,130,246,0.7)';
+      });
+
+      el.addEventListener('click', () => {
+        showProperties(key);
+      });
+
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat(region.center)
+        .addTo(map);
+
+      markers.push(marker);
+    });
+  }
+
+  // Show properties list in sidebar
+  const sidebar = document.getElementById('sidebar');
+  const propertiesList = document.getElementById('properties-list');
+  const regionNameSpan = document.getElementById('region-name');
+
+  function showProperties(regionKey) {
+    const region = regions[regionKey];
+    regionNameSpan.textContent = region.name;
+    propertiesList.innerHTML = '';
+
+    region.properties.forEach(property => {
+      const card = document.createElement('div');
+      card.className = 'property-card';
+      card.setAttribute('tabindex', '0');
+
+      card.innerHTML = 
+        <img class="property-img" src="${property.images[0]}" alt="${property.title}" />
+        <div class="property-info">
+          <div class="property-title">${property.title}</div>
+          <div class="property-price">${property.price}</div>
+        </div>
+      ;
+
+      card.addEventListener('click', () => {
+        openModal(property);
+      });
+
+      card.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') openModal(property);
+      });
+
+      propertiesList.appendChild(card);
+    });
+
+    sidebar.classList.add('active');
+
+    // Zoom map to region center with animation
+    map.flyTo({ center: region.center, zoom: 14, speed: 1.2, curve: 1.2 });
+  }
+
+  // Modal functionality
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const gallery = document.getElementById('gallery');
+  const description = document.getElementById('description');
+  const tour360 = document.getElementById('tour360');
+  const modalClose = document.getElementById('modal-close');
+  const uploadArea = document.getElementById('upload-area');
+  const fileUpload = document.getElementById('file-upload');
+
+  function openModal(property) {
+    modalTitle.textContent = property.title;
+    description.textContent = property.description;
+    gallery.innerHTML = '';
+    property.images.forEach(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = property.title;
+      gallery.appendChild(img);
+    });
+    // اگر تور ۳۶۰ داری اینجا مقدار بده و نمایش بده، الان placeholder هست
+    tour360.textContent = property.tour360 ? "" : "تور ۳۶۰ درجه اینجا قرار می‌گیرد";
+
+    modal.classList.add('active');
+  }
+
+  modalClose.addEventListener('click', () => {
+    modal.classList.remove('active');
+  });modal.addEventListener('click', e => {
+    if (e.target === modal) modal.classList.remove('active');
+  });
+
+  // Upload drag & drop
+  uploadArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  uploadArea.addEventListener('dragleave', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+  });
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+  uploadArea.addEventListener('click', () => fileUpload.click());
+  fileUpload.addEventListener('change', () => {
+    handleFiles(fileUpload.files);
+  });
+
+  function handleFiles(files) {
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      // ساده‌ترین افکت بارگذاری (نمایش اسم عکس اضافه شده)
+      const p = document.createElement('p');
+      p.textContent = عکس اضافه شد: ${file.name};
+      p.style.color = '#60a5fa';
+      gallery.appendChild(p);
+    }
+  }
+
+  // Initialize markers on map load
+  map.on('load', () =>
