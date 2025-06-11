@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Home | متاهوم</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #0f1f2e;
+            color: white;
+            direction: rtl;
+        }
+        header {
+            background-color: #1a2b3c;
+            padding: 1rem;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: #f4f4f4;
+        }
+        nav {
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding: 1rem 0;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        section {
+            padding: 2rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #ffcc00;
+        }
+        .calculator, .search-form, .compare-section, .chatbot {
+            background-color: #1e3a5f;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        input, select, button, textarea {
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            width: 100%;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+        button {
+            background-color: #ffcc00;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .result-box {
+            background-color: #123;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>متاهوم | Meta Home</h1>
+    </header>
+
+    <nav>
+        <a href="#">خانه</a>
+        <a href="#">فایل‌های موجود</a>
+        <a href="#">مقایسه</a>
+        <a href="#">تماس با ما</a>
+    </nav>
+
+    <section class="calculator">
+        <div class="section-title">📊 ماشین حساب خرید / اجاره</div>
+        <label>قیمت ملک (تومان):</label>
+        <input type="number" id="price" placeholder="مثلاً ۵۰۰۰۰۰۰۰۰۰">
+        <label>اجاره ماهانه (تومان):</label>
+        <input type="number" id="rent" placeholder="مثلاً ۲۰۰۰۰۰۰۰">
+        <button onclick="calculate()">محاسبه</button>
+        <div class="result-box" id="calc-result"></div>
+    </section>
+
+    <section class="search-form">
+        <div class="section-title">🔍 جستجوی ملک</div>
+        <label>شهر:</label>
+        <select>
+            <option>تهران</option>
+            <option>مشهد</option>
+            <option>شیراز</option>
+            <option>اصفهان</option>
+        </select>
+        <label>حداکثر قیمت (تومان):</label>
+        <input type="number" placeholder="مثلاً ۲ میلیارد">
+        <label>نوع ملک:</label>
+        <select>
+            <option>آپارتمان</option>
+            <option>ویلایی</option>
+            <option>تجاری</option>
+        </select>
+        <button>جستجو</button>
+    </section>
+
+    <section class="compare-section">
+        <div class="section-title">📑 مقایسه فایل‌ها</div>
+        <p>فعلاً در نسخه دمویی: فایل ۱، فایل ۲، فایل ۳ انتخاب شدند. مقایسه نمایشی انجام می‌شود.</p>
+        <div class="result-box">
+            <p>🏠 فایل ۱: ۸۰ متر، نوساز، تهرانپارس</p>
+            <p>🏠 فایل ۲: ۱۰۰ متر، بازسازی‌شده، سعادت‌آباد</p>
+            <p>🏠 فایل ۳: ۷۵ متر، قدیمی، ونک</p>
+        </div>
+    </section>
+
+    <section class="chatbot">
+        <div class="section-title">🤖 مشاور هوشمند متاهوم</div>
+        <textarea rows="3" placeholder="سؤالت رو بنویس..."></textarea>
+        <button>ارسال</button>
+        <div class="result-box">
+            🧠 پاسخ نمونه: برای خرید در تهرانپارس با بودجه ۴ میلیارد، چند گزینه داریم. لطفاً متراژ موردنظر رو هم بفرستید.
+        </div>
+    </section>
+
+    <script>
+        function calculate() {
+            const price = parseInt(document.getElementById('price').value) || 0;
+            const rent = parseInt(document.getElementById('rent').value) || 0;
+            let result = '';
+            if (price && rent) {
+                const annualRent = rent * 12;
+                const roi = ((annualRent / price) * 100).toFixed(2);
+                result = `🔹 اجاره سالانه: ${annualRent.toLocaleString()} تومان<br>🔹 بازگشت سرمایه: ${roi}%`;
+            } else {
+                result = 'لطفاً قیمت و اجاره را وارد کنید.';
+            }
+            document.getElementById('calc-result').innerHTML = result;
+        }
+    </script>
+
+</body>
+</html>
